@@ -2,6 +2,8 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
+import {PublicKeyInfrastructure} from "./PublicKeyInfrastructure.sol";
+
 contract ElToken is IERC20 {
     string public name;
     string public symbol;
@@ -16,6 +18,8 @@ contract ElToken is IERC20 {
 
     mapping(address => uint256) public mintPending;
     uint256 public mintTotal;
+
+    PublicKeyInfrastructure immutable PKI = new PublicKeyInfrastructure();
 
     constructor(string memory _name, string memory _symbol, address _underlyingToken) {
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
