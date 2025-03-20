@@ -3,4 +3,11 @@ src = "src"
 out = "out"
 libs = ["lib"]
 
+# extras for noir
+fs_permissions = [{ access = "read-write", path = "./"},{ access = "read-write", path = "/tmp/"}]
+ffi = true
+via-ir = true
+evm_version = "cancun"
+
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

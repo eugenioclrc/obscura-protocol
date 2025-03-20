@@ -1,0 +1,3 @@
+forge-std/=lib/forge-std/src/
+foundry-noir-helper/=lib/foundry-noir-helper/src/
+solady/=lib/foundry-noir-helper/lib/solady/src/
