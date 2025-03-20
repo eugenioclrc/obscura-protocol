@@ -15,12 +15,9 @@ contract ElToken is IERC20 {
     IERC20 immutable underlyingToken;
 
     mapping(address => uint256) public mintPending;
+    uint256 public mintTotal;
 
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        address _underlyingToken
-    ) {
+    constructor(string memory _name, string memory _symbol, address _underlyingToken) {
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
@@ -38,11 +35,20 @@ contract ElToken is IERC20 {
     function deposit(uint256 amount) external {
         require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVALID_AMOUNT");
         mintPending[msg.sender] += amount;
+        mintTotal += amount;
 
-        underlyingToken.transferFrom(msg.sender, address(this), amount);        
+        require(mintTotal + totalSupply <= type(uint40).max, "OVERFLOW");
+
+        uint256 startBalance = underlyingToken.balanceOf(address(this));
+        underlyingToken.transferFrom(msg.sender, address(this), amount);
+        require(underlyingToken.balanceOf(address(this)) - startBalance == amount, "TRANSFER_FAILED");
     }
 
     function mint() external {
+        uint256 amount = mintPending[msg.sender];
+        mintPending[msg.sender] = 0;
+        totalSupply += amount;
+        mintTotal -= amount;
         // todo
     }
 
@@ -57,5 +63,4 @@ contract ElToken is IERC20 {
     function transfer(address to, uint256 amount) external returns (bool) {
         revert("todo");
     }
-
 }
