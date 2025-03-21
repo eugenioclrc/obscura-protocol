@@ -2,7 +2,7 @@ pragma solidity ^0.8.17;
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
-import {PublicKeyInfrastructure} from "./PublicKeyInfrastructure.sol";
+import {PublicKeyInfrastructure, PublicKey} from "./PublicKeyInfrastructure.sol";
 
 contract ElToken is IERC20 {
     string public name;
@@ -21,7 +21,14 @@ contract ElToken is IERC20 {
 
     PublicKeyInfrastructure immutable PKI = new PublicKeyInfrastructure();
 
-    constructor(string memory _name, string memory _symbol, address _underlyingToken) {
+    struct EncryptedBalance { // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub) 
+        uint256 C1x;
+        uint256 C1y;
+        uint256 C2x;
+        uint256 C2y;
+    }
+
+    constructor(address _underlyingToken) {
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
@@ -37,7 +44,7 @@ contract ElToken is IERC20 {
     }
 
     function deposit(uint256 amount) external {
-        require(PKI.isRegistered(user), "NOT_REGISTERED");
+        require(PKI.isRegistered(msg.sender), "NOT_REGISTERED");
         require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVALID_AMOUNT");
         mintPending[msg.sender] += amount;
         mintTotal += amount;
@@ -55,8 +62,8 @@ contract ElToken is IERC20 {
         totalSupply += amount;
         mintTotal -= amount;
 
-        PublicKey memory registeredKey = PKI.registry(msg.sender);
-        _mint(msg.sender, amount, proof_mint, registeredKey, amountEncrypted);
+        //PublicKey memory registeredKey = PKI.registry(msg.sender);
+        //_mint(msg.sender, amount, proof_mint, registeredKey, amountEncrypted);
     }
 
     function approve(address spender, uint256 amount) external returns (bool) {

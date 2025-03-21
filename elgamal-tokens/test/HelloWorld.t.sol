@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
-import {NoirHelper} from "./NoirHelper.sol";
+import {NoirHelper} from "foundry-noir-helper/NoirHelper.sol";
 
 import {UltraVerifier as HelloWorldVerifer} from "../src/verifiers/helloworldUltraVerifier.sol";
 import {Starter} from "../src/Starter.sol";
