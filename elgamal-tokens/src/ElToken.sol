@@ -1,5 +1,7 @@
 pragma solidity ^0.8.17;
 
+import {Test, console} from "forge-std/Test.sol";
+
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 import {PublicKeyInfrastructure, PublicKey} from "./PublicKeyInfrastructure.sol";
@@ -10,7 +12,7 @@ contract ElToken is IERC20 {
     string public name;
     string public symbol;
     uint8 public decimals;
-    uint256 DEPOSIT_MULTIPLE;
+    uint256 public immutable DEPOSIT_MULTIPLE;
 
     uint256 public totalSupply;
     mapping(address => EncryptedBalance) public balances;
@@ -21,7 +23,7 @@ contract ElToken is IERC20 {
     mapping(address => uint256) public mintPending;
     uint256 public mintTotal;
 
-    PublicKeyInfrastructure immutable PKI = new PublicKeyInfrastructure();
+    PublicKeyInfrastructure immutable PKI;
     IVerifier public immutable MINT_VERIFIER;
 
     struct EncryptedBalance {
@@ -32,18 +34,21 @@ contract ElToken is IERC20 {
         uint256 C2y;
     }
 
-    constructor(address _underlyingToken, address _mint_verifier) {
+    constructor(address _underlyingToken, address pki,  address _mint_verifier) {
         MINT_VERIFIER = IVerifier(_mint_verifier);
+        PKI = PublicKeyInfrastructure(pki);
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
 
+        console.log("Decimal: ", _decimal);
         if (_decimal < 4) {
             DEPOSIT_MULTIPLE = 10 ** _decimal;
             decimals = _decimal;
         } else {
-            DEPOSIT_MULTIPLE = 10 ** _decimal - 4;
+            DEPOSIT_MULTIPLE = 10 ** (_decimal - 4);
             decimals = _decimal - 4;
+            
         }
         underlyingToken = IERC20(_underlyingToken);
     }
@@ -63,11 +68,11 @@ contract ElToken is IERC20 {
 
     function deposit(uint256 amount) external {
         require(PKI.isRegistered(msg.sender), "NOT_REGISTERED");
-        require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVALID_AMOUNT");
+        console.log("expected", (amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE, amount);
+        require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVA1LID_AMOUNT");
         mintPending[msg.sender] += amount;
         mintTotal += amount;
-
-        require(mintTotal + totalSupply <= type(uint40).max, "OVERFLOW");
+        require(mintTotal + totalSupply > type(uint40).max, "OVERFLOW_UINT40");
 
         uint256 startBalance = underlyingToken.balanceOf(address(this));
         underlyingToken.transferFrom(msg.sender, address(this), amount);

@@ -6,26 +6,43 @@ import {NoirHelper} from "foundry-noir-helper/NoirHelper.sol";
 
 import {UltraVerifier as MintUltraVerifier} from "../src/verifiers/mintUltraVerifier.sol";
 import {ElToken} from "../src/ElToken.sol";
+import {PublicKeyInfrastructure} from "../src/PublicKeyInfrastructure.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
 
 contract UltraVerifierTest is Test {
     NoirHelper public noirHelper = new NoirHelper();
 
     MintUltraVerifier public mint_verifier;
+    PublicKeyInfrastructure public pki = new PublicKeyInfrastructure();
     ElToken public elToken;
+    WETH public weth = new WETH();
+
+    address bob = makeAddr("bob");
 
     function setUp() public {
-        address underlyingToken = address(new WETH());
-        elToken = new ElToken(underlyingToken, address(mint_verifier));
+        elToken = new ElToken(address(weth), address(pki), address(mint_verifier));
         mint_verifier = new MintUltraVerifier();
+
+        // Mint some tokens
+        deal(bob, 1 ether);
+        vm.startPrank(bob);
+        weth.deposit{value: 1 ether}();
+        weth.approve(address(elToken), type(uint256).max);
+        vm.stopPrank();
     }
 
     function test_verifyProof() public {
-        //noirHelper = noirHelper.withProjectPath("./circuits/helloworld");
-        //noirHelper.withInput("x", 1).withInput("y", 1).withInput("return", 1);
-        //(bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_verifyProof", 2);
-        //console.logBytes32(publicInputs[0]);
-        //starter.verifyEqual(proof, publicInputs);
+        vm.startPrank(bob);
+
+        vm.expectRevert("NOT_REGISTERED");
+        elToken.deposit(1 ether);
+
+        pki.registerPublicKey(2, 2);
+
+
+
+        elToken.deposit(1 ether);
+        
     }
 
     /*
