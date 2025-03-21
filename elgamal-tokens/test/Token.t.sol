@@ -39,10 +39,7 @@ contract UltraVerifierTest is Test {
 
         pki.registerPublicKey(2, 2);
 
-
-
         elToken.deposit(1 ether);
-        
     }
 
     /*

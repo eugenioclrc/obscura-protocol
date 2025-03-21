@@ -12,7 +12,8 @@ contract ElToken is IERC20 {
     string public name;
     string public symbol;
     uint8 public decimals;
-    uint256 public immutable DEPOSIT_MULTIPLE;
+    uint256 public immutable MIN_DEPOSIT;
+    uint256 public immutable PRECISION_DIFF;
 
     uint256 public totalSupply;
     mapping(address => EncryptedBalance) public balances;
@@ -34,7 +35,7 @@ contract ElToken is IERC20 {
         uint256 C2y;
     }
 
-    constructor(address _underlyingToken, address pki,  address _mint_verifier) {
+    constructor(address _underlyingToken, address pki, address _mint_verifier) {
         MINT_VERIFIER = IVerifier(_mint_verifier);
         PKI = PublicKeyInfrastructure(pki);
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
@@ -43,12 +44,13 @@ contract ElToken is IERC20 {
 
         console.log("Decimal: ", _decimal);
         if (_decimal < 4) {
-            DEPOSIT_MULTIPLE = 10 ** _decimal;
+            MIN_DEPOSIT = 10 ** _decimal;
             decimals = _decimal;
+            PRECISION_DIFF = 4 - _decimal;
         } else {
-            DEPOSIT_MULTIPLE = 10 ** (_decimal - 4);
+            MIN_DEPOSIT = 10 ** (_decimal - 4);
             decimals = _decimal - 4;
-            
+            PRECISION_DIFF = 0;
         }
         underlyingToken = IERC20(_underlyingToken);
     }
@@ -66,17 +68,18 @@ contract ElToken is IERC20 {
         ret = ret == 0 ? 1 : ret;
     }
 
-    function deposit(uint256 amount) external {
+    function deposit(uint256 amountUnderlying) external {
         require(PKI.isRegistered(msg.sender), "NOT_REGISTERED");
-        console.log("expected", (amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE, amount);
-        require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVA1LID_AMOUNT");
+        require(amountUnderlying >= MIN_DEPOSIT, "MIN_DEPOSIT_NOT_MET");
+
+        uint256 amount = amountUnderlying / (10 ** PRECISION_DIFF);
         mintPending[msg.sender] += amount;
         mintTotal += amount;
         require(mintTotal + totalSupply > type(uint40).max, "OVERFLOW_UINT40");
 
         uint256 startBalance = underlyingToken.balanceOf(address(this));
-        underlyingToken.transferFrom(msg.sender, address(this), amount);
-        require(underlyingToken.balanceOf(address(this)) - startBalance == amount, "TRANSFER_FAILED");
+        underlyingToken.transferFrom(msg.sender, address(this), amountUnderlying);
+        require(underlyingToken.balanceOf(address(this)) - startBalance == amountUnderlying, "TRANSFER_FAILED");
     }
 
     function mint(bytes memory proof_mint, EncryptedBalance memory amountEncrypted) external {
