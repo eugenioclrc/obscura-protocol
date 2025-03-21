@@ -19,9 +19,14 @@ struct PublicKey {
  * to him will fail as there is no check on X and Y values to verify that the registered point is on Baby Jubjub in this contract.
  */
 contract PublicKeyInfrastructure {
-    mapping(address => PublicKey) internal registry;
+    mapping(address => PublicKey) public registry;
 
     event NewRegisteredPublicKey(address indexed owner, uint256 PubKeyX, uint256 PubKeyY);
+
+    function isRegistered(address account) external view returns (bool) {
+        PublicKey memory registeredKey = registry[account];
+        return registeredKey.X > 0 && registeredKey.Y > 0;
+    }
 
     function registerPublicKey(uint256 X, uint256 Y) external {
         require(X + Y != 0, "Public Key cannot be the origin point");
@@ -29,9 +34,5 @@ contract PublicKeyInfrastructure {
         require(registeredKey.X + registeredKey.Y == 0, "Account already registered");
         registry[msg.sender] = PublicKey(X, Y);
         emit NewRegisteredPublicKey(msg.sender, X, Y);
-    }
-
-    function getRegistredKey(address user) external view returns (PublicKey memory) {
-        return registry[user];
     }
 }

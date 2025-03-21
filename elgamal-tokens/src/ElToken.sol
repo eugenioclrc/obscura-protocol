@@ -37,6 +37,7 @@ contract ElToken is IERC20 {
     }
 
     function deposit(uint256 amount) external {
+        require(PKI.isRegistered(user), "NOT_REGISTERED");
         require((amount / DEPOSIT_MULTIPLE) * DEPOSIT_MULTIPLE == amount, "INVALID_AMOUNT");
         mintPending[msg.sender] += amount;
         mintTotal += amount;
@@ -48,12 +49,14 @@ contract ElToken is IERC20 {
         require(underlyingToken.balanceOf(address(this)) - startBalance == amount, "TRANSFER_FAILED");
     }
 
-    function mint() external {
+    function mint(bytes memory proof_mint, EncryptedBalance memory amountEncrypted) external {
         uint256 amount = mintPending[msg.sender];
         mintPending[msg.sender] = 0;
         totalSupply += amount;
         mintTotal -= amount;
-        // todo
+
+        PublicKey memory registeredKey = PKI.registry(msg.sender);
+        _mint(msg.sender, amount, proof_mint, registeredKey, amountEncrypted);
     }
 
     function approve(address spender, uint256 amount) external returns (bool) {
