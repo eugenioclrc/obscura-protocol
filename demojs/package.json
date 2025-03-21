@@ -1,0 +1,25 @@
+{
+  "name": "elgamal-tokens-demojs",
+  "version": "1.0.0",
+  "description": "JavaScript demo of ElGamal encryption tests",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "NODE_OPTIONS=--loader=ts-node/esm mocha --timeout 10000 test/**/*.test.ts"
+  },
+  "dependencies": {
+    "chai": "^5.2.0",
+    "circomlibjs": "0.1.7",
+    "mocha": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.11",
+    "@types/chai-as-promised": "^8.0.2",
+    "@types/circomlibjs": "^0.1.6",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.11.19",
+    "chai-as-promised": "^8.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
