@@ -139,5 +139,17 @@ describe('ElGamal Encryption Tests', () => {
         // Verify the decrypted point is equal to the base point multiplied by 42
         const expectedPoint = utils.privateToPublicKey(42);
         expect(decrypted.x === expectedPoint.x && decrypted.y === expectedPoint.y).to.be.true;
+
+
+        const _privateKey =363392786237362068767139959337036002311688465567650996034788007646727742377n;
+        const _publicKey = {
+          x: 11399805767625558235203971404651168062138053844057929237231029823545978690429n,
+          y: 16107672938816583933731171731418032574757815549503661527457618583376341575199n
+        };
+        const _random = 168986485046885582825082387270879151100288537211746581237924789162159767775n;
+        const _plaintext = 10000;
+
+        const _ciphertext = utils.exp_elgamal_encrypt(_publicKey, _plaintext, _random);
+        console.log({ _ciphertext });
     });
 }); 
