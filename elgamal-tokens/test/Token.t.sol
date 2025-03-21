@@ -79,19 +79,19 @@ contract UltraVerifierTest is Test {
         noirHelper = noirHelper.withProjectPath("./circuits/mint");
         noirHelper.clean();
         
-        // Create inputs for the proof
-        noirHelper.withInput("private_key", privateKey)
-            .withInput("randomness", randomness)
-            .withInput("public_key_x", publicKeyX)
-            .withInput("public_key_y", publicKeyY)
-            .withInput("value", mintAmount)
-            .withInput("C1_x", C1_x)
-            .withInput("C1_y", C1_y)
-            .withInput("C2_x", C2_x)
-            .withInput("C2_y", C2_y);
+        // Create inputs for the proof - using string representations to avoid TOML parsing issues
+        noirHelper.withInput("private_key", vm.toString(privateKey))
+            .withInput("randomness", vm.toString(randomness))
+            .withInput("public_key_x", vm.toString(publicKeyX))
+            .withInput("public_key_y", vm.toString(publicKeyY))
+            .withInput("value", vm.toString(mintAmount))
+            .withInput("C1_x", vm.toString(C1_x))
+            .withInput("C1_y", vm.toString(C1_y))
+            .withInput("C2_x", vm.toString(C2_x))
+            .withInput("C2_y", vm.toString(C2_y));
         
-        // Generate the proof
-        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint",8);
+        // Generate the proof - using 4 public inputs (public key x/y and ciphertext points)
+        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint", 4);
         
         ElToken.EncryptedBalance memory encryptedBalance = ElToken.EncryptedBalance({
             C1x: C1_x,
