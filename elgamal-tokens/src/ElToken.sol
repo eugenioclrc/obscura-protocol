@@ -4,6 +4,8 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
 import {PublicKeyInfrastructure, PublicKey} from "./PublicKeyInfrastructure.sol";
 
+import {IVerifier} from "./IVerifier.sol";
+
 contract ElToken is IERC20 {
     string public name;
     string public symbol;
@@ -11,7 +13,7 @@ contract ElToken is IERC20 {
     uint256 DEPOSIT_MULTIPLE;
 
     uint256 public totalSupply;
-    mapping(address => uint256) public balanceOf;
+    mapping(address => EncryptedBalance) public balances;
     mapping(address => mapping(address => uint256)) public allowance;
 
     IERC20 immutable underlyingToken;
@@ -20,15 +22,18 @@ contract ElToken is IERC20 {
     uint256 public mintTotal;
 
     PublicKeyInfrastructure immutable PKI = new PublicKeyInfrastructure();
+    IVerifier public immutable MINT_VERIFIER;
 
-    struct EncryptedBalance { // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub) 
+    struct EncryptedBalance {
+        // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub)
         uint256 C1x;
         uint256 C1y;
         uint256 C2x;
         uint256 C2y;
     }
 
-    constructor(address _underlyingToken) {
+    constructor(address _underlyingToken, address _mint_verifier) {
+        MINT_VERIFIER = IVerifier(_mint_verifier);
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
@@ -41,6 +46,19 @@ contract ElToken is IERC20 {
             decimals = _decimal - 4;
         }
         underlyingToken = IERC20(_underlyingToken);
+    }
+
+    // @dev Returns amount but is not real, because is encrypted
+    function balanceOf(address account) external view override returns (uint256 ret) {
+        EncryptedBalance storage balance = balances[account];
+
+        if (balance.C1x == 0 && balance.C1y == 0 && balance.C2x == 0 && balance.C2y == 0) {
+            return ret;
+        }
+        unchecked {
+            ret = balance.C1x + balance.C1y + balance.C2x + balance.C2y;
+        }
+        ret = ret == 0 ? 1 : ret;
     }
 
     function deposit(uint256 amount) external {
@@ -62,8 +80,19 @@ contract ElToken is IERC20 {
         totalSupply += amount;
         mintTotal -= amount;
 
-        //PublicKey memory registeredKey = PKI.registry(msg.sender);
+        (uint256 registeredKeyX, uint256 registeredKeyY) = PKI.registry(msg.sender);
         //_mint(msg.sender, amount, proof_mint, registeredKey, amountEncrypted);
+
+        bytes32[] memory publicInputs = new bytes32[](7);
+        publicInputs[0] = bytes32(registeredKeyX);
+        publicInputs[1] = bytes32(registeredKeyY);
+        publicInputs[2] = bytes32(uint256(amount));
+        publicInputs[3] = bytes32(amountEncrypted.C1x);
+        publicInputs[4] = bytes32(amountEncrypted.C1y);
+        publicInputs[5] = bytes32(amountEncrypted.C2x);
+        publicInputs[6] = bytes32(amountEncrypted.C2y);
+        require(MINT_VERIFIER.verify(proof_mint, publicInputs), "Mint proof is invalid"); // checks that the initial balance of the deployer is a correct encryption of the initial supply (and the deployer owns the private key corresponding to his registered public key)
+        balances[msg.sender] = amountEncrypted;
     }
 
     function approve(address spender, uint256 amount) external returns (bool) {
