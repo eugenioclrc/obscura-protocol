@@ -91,10 +91,17 @@ contract UltraVerifierTest is Test {
             .withInput("C2_y", C2_y);
         
         // Generate the proof
-        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint", 2);
+        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint",8);
         
+        ElToken.EncryptedBalance memory encryptedBalance = ElToken.EncryptedBalance({
+            C1x: C1_x,
+            C1y: C1_y,
+            C2x: C2_x,
+            C2y: C2_y
+        });
+
         // Execute mint with the proof
-        elToken.mint(proof, publicInputs);
+        elToken.mint(proof, encryptedBalance);
         
         // Assert the mint was successful
         assertEq(elToken.mintPending(bob), 0);
