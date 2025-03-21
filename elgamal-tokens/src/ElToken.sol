@@ -1,6 +1,6 @@
 pragma solidity ^0.8.17;
 
-import {Test, console} from "forge-std/Test.sol";
+//import {Test, console} from "forge-std/Test.sol";
 
 import {IERC20} from "forge-std/interfaces/IERC20.sol";
 
@@ -42,15 +42,14 @@ contract ElToken is IERC20 {
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
 
-        console.log("Decimal: ", _decimal);
         if (_decimal < 4) {
-            MIN_DEPOSIT = 10 ** _decimal;
+            MIN_DEPOSIT = 0;
             decimals = _decimal;
-            PRECISION_DIFF = 4 - _decimal;
+            PRECISION_DIFF = 0;
         } else {
             MIN_DEPOSIT = 10 ** (_decimal - 4);
             decimals = _decimal - 4;
-            PRECISION_DIFF = 0;
+            PRECISION_DIFF = _decimal - 4;
         }
         underlyingToken = IERC20(_underlyingToken);
     }
@@ -73,9 +72,10 @@ contract ElToken is IERC20 {
         require(amountUnderlying >= MIN_DEPOSIT, "MIN_DEPOSIT_NOT_MET");
 
         uint256 amount = amountUnderlying / (10 ** PRECISION_DIFF);
+        amountUnderlying = amount * (10 ** PRECISION_DIFF); 
         mintPending[msg.sender] += amount;
         mintTotal += amount;
-        require(mintTotal + totalSupply > type(uint40).max, "OVERFLOW_UINT40");
+        require(mintTotal + totalSupply <= type(uint40).max, "OVERFLOW_UINT40");
 
         uint256 startBalance = underlyingToken.balanceOf(address(this));
         underlyingToken.transferFrom(msg.sender, address(this), amountUnderlying);

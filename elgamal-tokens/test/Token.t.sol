@@ -31,6 +31,11 @@ contract UltraVerifierTest is Test {
         vm.stopPrank();
     }
 
+    function test_contants() public {
+        assertEq(elToken.MIN_DEPOSIT(), 0.0001 ether);
+        assertEq(elToken.PRECISION_DIFF(), 18 - 4);
+    }
+
     function test_verifyProof() public {
         vm.startPrank(bob);
 
@@ -39,7 +44,16 @@ contract UltraVerifierTest is Test {
 
         pki.registerPublicKey(2, 2);
 
-        elToken.deposit(1 ether);
+        vm.expectRevert();
+        elToken.deposit(2 ether);
+
+        vm.expectRevert("MIN_DEPOSIT_NOT_MET");
+        elToken.deposit(4);
+
+        elToken.deposit(0.123342342443240345 ether);
+        assertEq(weth.balanceOf(bob), 1 ether - 0.1233 ether);
+        assertEq(elToken.mintPending(bob), 0.1233 ether / 10**14);
+        vm.stopPrank();
     }
 
     /*
