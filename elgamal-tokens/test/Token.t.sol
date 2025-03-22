@@ -5,6 +5,9 @@ import {Test, console} from "forge-std/Test.sol";
 import {NoirHelper} from "foundry-noir-helper/NoirHelper.sol";
 
 import {UltraVerifier as MintUltraVerifier} from "../src/verifiers/mintUltraVerifier.sol";
+import {UltraVerifier as TransferUltraVerifier} from "../src/verifiers/transferUltraVerifier.sol";
+import {UltraVerifier as TransferToNewUltraVerifier} from "../src/verifiers/transfer_to_newUltraVerifier.sol";
+
 import {ElToken} from "../src/ElToken.sol";
 import {PublicKeyInfrastructure} from "../src/PublicKeyInfrastructure.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
@@ -13,12 +16,14 @@ contract UltraVerifierTest is Test {
     NoirHelper public noirHelper;
 
     MintUltraVerifier public MINT_VERIFIER;
+    TransferUltraVerifier public TRANSFER_VERIFIER;
+    TransferToNewUltraVerifier public TRANSFER_TO_NEW_VERIFIER;
     PublicKeyInfrastructure public PKI;
     ElToken public elToken;
     WETH public weth;
 
     address bob = makeAddr("bob");
-
+    address alice = makeAddr("alice");
     function setUp() public {
         noirHelper = new NoirHelper();
 
@@ -26,6 +31,8 @@ contract UltraVerifierTest is Test {
 
         PKI = new PublicKeyInfrastructure();
         MINT_VERIFIER = new MintUltraVerifier();
+        TRANSFER_VERIFIER = new TransferUltraVerifier();
+        TRANSFER_TO_NEW_VERIFIER = new TransferToNewUltraVerifier();
         elToken = new ElToken(address(weth));
 
         // Mint some tokens
@@ -57,7 +64,7 @@ contract UltraVerifierTest is Test {
 
         elToken.deposit(0.123342342443240345 ether);
         assertEq(weth.balanceOf(bob), 1 ether - 0.1233 ether);
-        assertEq(elToken.mintPending(bob), 0.1233 ether / 10**14);
+        assertEq(elToken.mintPending(bob), 0.1233 ether / 10 ** 14);
         vm.stopPrank();
     }
 
@@ -70,41 +77,39 @@ contract UltraVerifierTest is Test {
         vm.startPrank(bob);
         PKI.registerPublicKey(publicKeyX, publicKeyY);
         elToken.deposit(1 ether);
-        
+        assertEq(elToken.mintPending(bob), 1 ether / 10 ** 14);
+
         // Encrypted ciphertext data
         uint256 C1_x = 1496197583352242063455862221527010906604817232528901172130809043230997246824;
         uint256 C1_y = 4254363608840175473367393558422388112815775052382181131620648571022664794991;
         uint256 C2_x = 547569482198353691335551042438602887242720055887692148619786977945462377382;
         uint256 C2_y = 19058709733707387429852348723195847206775195997862985934749463164317886511126;
-        
-        // Get pending mint amount
-        uint256 mintAmount = elToken.mintPending(bob);
-        
+
         // Setup Noir proof generation
-        noirHelper = noirHelper.withProjectPath("./circuits/mint");
-        noirHelper.clean();
-        
+        //noirHelper = noirHelper.withProjectPath("./circuits/mint");
+        //noirHelper.clean();
+
         // Create inputs for the proof - using string representations to avoid TOML parsing issues
-        
-        ElToken.EncryptedBalance memory encryptedBalance = ElToken.EncryptedBalance({
-            C1x: C1_x,
-            C1y: C1_y,
-            C2x: C2_x,
-            C2y: C2_y
-        });
+
+        ElToken.EncryptedBalance memory encryptedBalance =
+            ElToken.EncryptedBalance({C1x: C1_x, C1y: C1_y, C2x: C2_x, C2y: C2_y});
 
         // Load the proof from file
         string memory proofJson = vm.readFile("./test/proof_mint.bytes");
         bytes memory proof = vm.parseBytes(proofJson);
-        
 
         // Execute mint with the proof
         elToken.mint(proof, encryptedBalance);
-        
+
         // Assert the mint was successful
         assertEq(elToken.mintPending(bob), 0);
-        //assertEq(elToken.balanceOf(bob), mintAmount);
-        
+
+        vm.stopPrank();
+    }
+
+    function test_transfer() public {
+        vm.startPrank(bob);
+        elToken.transfer(alice, 1 ether);
         vm.stopPrank();
     }
 
@@ -119,4 +124,3 @@ contract UltraVerifierTest is Test {
     }
         */
 }
-

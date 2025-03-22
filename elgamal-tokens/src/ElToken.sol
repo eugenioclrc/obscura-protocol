@@ -27,6 +27,8 @@ contract ElToken is IERC20 {
     mapping(address => uint256) public mintPending;
     uint256 public mintTotal;
 
+    event PrivateTransfer(address indexed from, address indexed to);
+
     struct EncryptedBalance {
         // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub)
         uint256 C1x;
@@ -71,7 +73,7 @@ contract ElToken is IERC20 {
         require(amountUnderlying >= MIN_DEPOSIT, "MIN_DEPOSIT_NOT_MET");
 
         uint256 amount = amountUnderlying / (10 ** PRECISION_DIFF);
-        amountUnderlying = amount * (10 ** PRECISION_DIFF); 
+        amountUnderlying = amount * (10 ** PRECISION_DIFF);
         mintPending[msg.sender] += amount;
         mintTotal += amount;
         require(mintTotal + totalSupply <= type(uint40).max, "OVERFLOW_UINT40");
@@ -111,6 +113,118 @@ contract ElToken is IERC20 {
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
-        revert("todo");
+        revert("NOT_IMPLEMENTED");
+    }
+
+    function transferPrivate(
+        address to,
+        EncryptedBalance calldata EncryptedBalanceOldMe,
+        EncryptedBalance calldata EncryptedBalanceOldTo,
+        EncryptedBalance calldata EncryptedBalanceNewMe,
+        EncryptedBalance calldata EncryptedBalanceNewTo,
+        bytes memory proof_transfer
+    ) external returns (bool) {
+        EncryptedBalance memory EncryptedBalanceOldMeNow = balances[msg.sender];
+        EncryptedBalance memory EncryptedBalanceOldToNow = balances[to];
+        require(
+            EncryptedBalanceOldToNow.C1x == EncryptedBalanceOldTo.C1x
+                && EncryptedBalanceOldToNow.C1y == EncryptedBalanceOldTo.C1y
+                && EncryptedBalanceOldToNow.C2x == EncryptedBalanceOldTo.C2x
+                && EncryptedBalanceOldToNow.C2y == EncryptedBalanceOldTo.C2y
+                && EncryptedBalanceOldMeNow.C1x == EncryptedBalanceOldMe.C1x
+                && EncryptedBalanceOldMeNow.C1y == EncryptedBalanceOldMe.C1y
+                && EncryptedBalanceOldMeNow.C2x == EncryptedBalanceOldMe.C2x
+                && EncryptedBalanceOldMeNow.C2y == EncryptedBalanceOldMe.C2y
+        ); // this require is at the top of the transfer function, in order to limit gas spent in case of accidental front-running - front-running attack issue is already deterred thanks to the assert(value>=1) constraint inside the circuits (see comments in transfer/src/main.nr)
+        require(msg.sender != to, "Cannot transfer to self");
+
+        (uint256 registeredKeyMeX, uint256 registeredKeyMeY) = FACTORY.PKI().registry(msg.sender);
+        require(registeredKeyMeX + registeredKeyMeY != 0, "Sender has not registered a Public Key yet");
+
+        (uint256 registeredKeyToX, uint256 registeredKeyToY) = FACTORY.PKI().registry(to);
+        require(registeredKeyToX + registeredKeyToY != 0, "Receiver has not registered a Public Key yet");
+
+        require(
+            EncryptedBalanceOldMe.C1x + EncryptedBalanceOldMe.C1y + EncryptedBalanceOldMe.C1y
+                + EncryptedBalanceOldMe.C2y != 0,
+            "Sender has not received tokens yet"
+        ); // this should never overflow because 4*p<type(uint256).max
+
+        bool receiverAlreadyReceived = (
+            EncryptedBalanceOldTo.C1x + EncryptedBalanceOldTo.C1y + EncryptedBalanceOldTo.C1y
+                + EncryptedBalanceOldTo.C2y != 0
+        ); // this should never overflow because 4*p<type(uint256).max
+
+        if (receiverAlreadyReceived) {
+            bytes32[] memory publicInputs = new bytes32[](20);
+            publicInputs[0] = bytes32(registeredKeyMeX);
+            publicInputs[1] = bytes32(registeredKeyMeY);
+
+            publicInputs[2] = bytes32(registeredKeyToX);
+            publicInputs[3] = bytes32(registeredKeyToY);
+
+            publicInputs[4] = bytes32(EncryptedBalanceOldMe.C1x);
+            publicInputs[5] = bytes32(EncryptedBalanceOldMe.C1y);
+            publicInputs[6] = bytes32(EncryptedBalanceOldMe.C2x);
+            publicInputs[7] = bytes32(EncryptedBalanceOldMe.C2y);
+
+            publicInputs[8] = bytes32(EncryptedBalanceOldTo.C1x);
+            publicInputs[9] = bytes32(EncryptedBalanceOldTo.C1y);
+            publicInputs[10] = bytes32(EncryptedBalanceOldTo.C2x);
+            publicInputs[11] = bytes32(EncryptedBalanceOldTo.C2y);
+
+            publicInputs[12] = bytes32(EncryptedBalanceNewMe.C1x);
+            publicInputs[13] = bytes32(EncryptedBalanceNewMe.C1y);
+            publicInputs[14] = bytes32(EncryptedBalanceNewMe.C2x);
+            publicInputs[15] = bytes32(EncryptedBalanceNewMe.C2y);
+
+            publicInputs[16] = bytes32(EncryptedBalanceNewTo.C1x);
+            publicInputs[17] = bytes32(EncryptedBalanceNewTo.C1y);
+            publicInputs[18] = bytes32(EncryptedBalanceNewTo.C2x);
+            publicInputs[19] = bytes32(EncryptedBalanceNewTo.C2y);
+
+            require(FACTORY.TRANSFER_VERIFIER().verify(proof_transfer, publicInputs), "Transfer proof is invalid");
+        } else {
+            bytes32[] memory publicInputs = new bytes32[](16);
+            publicInputs[0] = bytes32(registeredKeyMeX);
+            publicInputs[1] = bytes32(registeredKeyMeY);
+
+            publicInputs[2] = bytes32(registeredKeyToX);
+            publicInputs[3] = bytes32(registeredKeyToY);
+
+            publicInputs[4] = bytes32(EncryptedBalanceOldMe.C1x);
+            publicInputs[5] = bytes32(EncryptedBalanceOldMe.C1y);
+            publicInputs[6] = bytes32(EncryptedBalanceOldMe.C2x);
+            publicInputs[7] = bytes32(EncryptedBalanceOldMe.C2y);
+
+            publicInputs[8] = bytes32(EncryptedBalanceNewMe.C1x);
+            publicInputs[9] = bytes32(EncryptedBalanceNewMe.C1y);
+            publicInputs[10] = bytes32(EncryptedBalanceNewMe.C2x);
+            publicInputs[11] = bytes32(EncryptedBalanceNewMe.C2y);
+
+            publicInputs[12] = bytes32(EncryptedBalanceNewTo.C1x);
+            publicInputs[13] = bytes32(EncryptedBalanceNewTo.C1y);
+            publicInputs[14] = bytes32(EncryptedBalanceNewTo.C2x);
+            publicInputs[15] = bytes32(EncryptedBalanceNewTo.C2y);
+
+            require(
+                FACTORY.TRANSFER_TO_NEW_VERIFIER().verify(proof_transfer, publicInputs),
+                "Transfer to new address proof is invalid"
+            );
+        }
+        balances[msg.sender] = EncryptedBalanceNewMe;
+        balances[to] = EncryptedBalanceNewTo;
+
+        emit PrivateTransfer(msg.sender, to);
+        unchecked {
+            emit Transfer(
+                msg.sender,
+                to,
+                EncryptedBalanceNewTo.C1x + EncryptedBalanceNewTo.C1y + EncryptedBalanceNewTo.C2x
+                    + EncryptedBalanceNewTo.C2y
+            );
+        }
+
+        return true;
     }
 }

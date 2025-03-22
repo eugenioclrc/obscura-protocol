@@ -18,7 +18,7 @@ contract UltraVerifierTest is Test {
         verifier = new HelloWorldVerifer();
         starter = new Starter(address(verifier));
     }
-/*
+    /*
     function test_verifyProof() public {
         noirHelper = noirHelper.withProjectPath("./circuits/helloworld");
         noirHelper.withInput("x", 1).withInput("y", 1).withInput("return", 1);

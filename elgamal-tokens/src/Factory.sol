@@ -7,11 +7,15 @@ import {PublicKeyInfrastructure} from "./PublicKeyInfrastructure.sol";
 contract ElTokenFactory {
     mapping(address => address) public tokens;
 
-    IVerifier public immutable MINT_VERIFIER;
     PublicKeyInfrastructure public immutable PKI;
-    
-    constructor(address _mint_verifier, address _pki) {
+    IVerifier public immutable MINT_VERIFIER;
+    IVerifier public immutable TRANSFER_VERIFIER;
+    IVerifier public immutable TRANSFER_TO_NEW_VERIFIER;
+
+    constructor(address _mint_verifier, address _transfer_verifier, address _transfer_to_new_verifier, address _pki) {
         MINT_VERIFIER = IVerifier(_mint_verifier);
+        TRANSFER_VERIFIER = IVerifier(_transfer_verifier);
+        TRANSFER_TO_NEW_VERIFIER = IVerifier(_transfer_to_new_verifier);
         PKI = PublicKeyInfrastructure(_pki);
     }
 
