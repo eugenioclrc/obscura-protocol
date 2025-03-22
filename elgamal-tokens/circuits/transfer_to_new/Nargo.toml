@@ -1,5 +1,5 @@
 [package]
-name = "transfer"
+name = "transfer_to_new"
 type = "bin"
 authors = [""]
 
