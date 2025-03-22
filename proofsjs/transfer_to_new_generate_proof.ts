@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Load circuit using a more robust approach
-const circuitPath = resolve(__dirname, '../elgamal-tokens/circuits/transfer_to_new/target/transfer_to_new.json');
+const circuitPath = resolve(__dirname, '../circuits/transfer_to_new/target/transfer_to_new.json');
 const circuit = JSON.parse(readFileSync(circuitPath, 'utf8'));
 
 // Helper function for JSON.stringify to handle BigInt
