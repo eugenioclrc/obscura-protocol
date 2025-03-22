@@ -8,6 +8,8 @@ import {PublicKeyInfrastructure, PublicKey} from "./PublicKeyInfrastructure.sol"
 
 import {IVerifier} from "./IVerifier.sol";
 
+import {ElTokenFactory} from "./Factory.sol";
+
 contract ElToken is IERC20 {
     string public name;
     string public symbol;
@@ -20,12 +22,12 @@ contract ElToken is IERC20 {
     mapping(address => mapping(address => uint256)) public allowance;
 
     IERC20 immutable underlyingToken;
+    ElTokenFactory immutable FACTORY;
 
     mapping(address => uint256) public mintPending;
     uint256 public mintTotal;
 
     PublicKeyInfrastructure immutable PKI;
-    IVerifier public immutable MINT_VERIFIER;
 
     struct EncryptedBalance {
         // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub)
@@ -35,9 +37,8 @@ contract ElToken is IERC20 {
         uint256 C2y;
     }
 
-    constructor(address _underlyingToken, address pki, address _mint_verifier) {
-        MINT_VERIFIER = IVerifier(_mint_verifier);
-        PKI = PublicKeyInfrastructure(pki);
+    constructor(address _underlyingToken) {
+        FACTORY = ElTokenFactory(msg.sender);
         name = string.concat("ElGamal ", IERC20(_underlyingToken).name());
         symbol = string.concat("EL-", IERC20(_underlyingToken).symbol());
         uint8 _decimal = IERC20(_underlyingToken).decimals();
@@ -68,7 +69,7 @@ contract ElToken is IERC20 {
     }
 
     function deposit(uint256 amountUnderlying) external {
-        require(PKI.isRegistered(msg.sender), "NOT_REGISTERED");
+        require(FACTORY.PKI().isRegistered(msg.sender), "NOT_REGISTERED");
         require(amountUnderlying >= MIN_DEPOSIT, "MIN_DEPOSIT_NOT_MET");
 
         uint256 amount = amountUnderlying / (10 ** PRECISION_DIFF);
@@ -99,16 +100,16 @@ contract ElToken is IERC20 {
         publicInputs[4] = bytes32(amountEncrypted.C1y);
         publicInputs[5] = bytes32(amountEncrypted.C2x);
         publicInputs[6] = bytes32(amountEncrypted.C2y);
-        require(MINT_VERIFIER.verify(proof_mint, publicInputs), "Mint proof is invalid"); // checks that the initial balance of the deployer is a correct encryption of the initial supply (and the deployer owns the private key corresponding to his registered public key)
+        require(FACTORY.MINT_VERIFIER().verify(proof_mint, publicInputs), "Mint proof is invalid"); // checks that the initial balance of the deployer is a correct encryption of the initial supply (and the deployer owns the private key corresponding to his registered public key)
         balances[msg.sender] = amountEncrypted;
     }
 
     function approve(address spender, uint256 amount) external returns (bool) {
-        revert("todo");
+        revert("NOT_IMPLEMENTED");
     }
 
     function transferFrom(address from, address to, uint256 amount) external returns (bool) {
-        revert("todo");
+        revert("NOT_IMPLEMENTED");
     }
 
     function transfer(address to, uint256 amount) external returns (bool) {
