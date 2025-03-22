@@ -59,29 +59,28 @@ const main = async () => {
         // Sender's old balance (this would be known to the sender since they can decrypt their balance)
         const senderOldBalanceClear = 9900;
         
-        // Randomness for encrypting the new balances
-        const randomness1 = BigInt("268986485046885582825082387270879151100288537211746581237924789162159767775");
-        const randomness2 = BigInt("3512595847879910647549805200013822046432901960729162086417588755890198945115");
+        // Randomness for encrypting the new balances - use the values from the Noir circuit test
+        const randomness1 = BigInt("168986485046885582825082387270879151100288537211746581237924789162159767775");
+        const randomness2 = BigInt("2512595847879910647549805200013822046432901960729162086417588755890198945115");
         
-        // Generate the encrypted old balances (normally these would come from the blockchain)
+        // Generate the encrypted old balances (use values from Noir test)
         console.log('Generating encrypted balances...');
         
         // Here we simulate existing encrypted balances for testing
-        const oldRandomness1 = BigInt("168986485046885582825082387270879151100288537211746581237924789162159767775");
-        const oldRandomness2 = BigInt("2512595847879910647549805200013822046432901960729162086417588755890198945115");
+        const oldRandomness1 = BigInt("1223911427385630814994881905088740515414339792865684838215099796087690786721");
+        const oldRandomness2 = BigInt("1391605116707840153256607813912547565986654451413670922768018807428594876790");
 
         const senderOldEncryptedBalance = bjj.exp_elgamal_encrypt(senderPublicKey, senderOldBalanceClear, oldRandomness1);
-        const recipientOldEncryptedBalance = bjj.exp_elgamal_encrypt(recipientPublicKey, 42, oldRandomness2);
+        const recipientOldEncryptedBalance = bjj.exp_elgamal_encrypt(recipientPublicKey, 100, oldRandomness2);
   
         // Calculate new balances
         const senderNewBalanceClear = senderOldBalanceClear - transferValue;
-        const recipientNewBalanceClear = 100 + transferValue;
+        const recipientNewBalanceClear = 100 + transferValue; // Receiver has 100 initially, gets 100 more
         
         // Encrypt new balances
         const senderNewEncryptedBalance = bjj.exp_elgamal_encrypt(senderPublicKey, senderNewBalanceClear, randomness1);
         
-        // For the recipient's new balance, we'd normally use homomorphic addition on the blockchain
-        // Here we're just encrypting it directly for the proof
+        // For the recipient's new balance, we'd use the same approach as in the test
         const recipientNewEncryptedBalance = bjj.exp_elgamal_encrypt(recipientPublicKey, recipientNewBalanceClear, oldRandomness2 + randomness2);
         
         // Final input for transfer proof using the exact format the circuit expects
