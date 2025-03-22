@@ -1,4 +1,4 @@
-import { buildBabyjub, Point } from "circomlibjs";
+import { buildBabyjub } from "circomlibjs";
 import crypto from "crypto";
 
 /*
@@ -10,6 +10,7 @@ Pack and unpack functions arent working properly for some reason.
 
 export type BigNumberish = string | bigint | number | Uint8Array;
 export type PointObject = { x: bigint; y: bigint };
+export type Point = [Uint8Array, Uint8Array];
 
 export class BabyJubJubUtils {
   private babyJub: any;

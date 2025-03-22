@@ -3,6 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'url';
 import path from 'path';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // Get the directory paths
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -10,16 +11,44 @@ const rootPath = path.resolve(__dirname, '..');
 const elgamalTokensPath = path.resolve(rootPath, 'elgamal-tokens');
 
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
+	plugins: [
+		tailwindcss(), 
+		sveltekit(),
+		// Add Node.js polyfills
+		nodePolyfills({
+			// Whether to polyfill `node:` protocol imports
+			protocolImports: true,
+			// Enable specific polyfills
+			include: ['buffer', 'process', 'util', 'stream', 'assert', 'crypto']
+		})
+	],
 	build: {
 		target: 'esnext',
+		rollupOptions: {
+			// Enable these as required by circomlibjs
+			output: {
+				manualChunks: {}
+			}
+		}
 	},
 	optimizeDeps: {
 		esbuildOptions: {
-			target: 'esnext'
+			target: 'esnext',
+			// Add Node.js polyfills for libraries that use Node.js builtins
+			define: {
+				global: 'globalThis'
+			}
 		},
 		// This option is required for @noir-lang/noir_wasm and other WASM packages
 		exclude: ['@noir-lang/noir_wasm', '@noir-lang/noir_js', '@aztec/bb.js']
+	},
+	resolve: {
+		dedupe: ['@noir-lang/noir_wasm', '@noir-lang/noir_js']
+	},
+	// Add Node.js polyfills
+	define: {
+		'process.env': {},
+		'global': 'globalThis'
 	},
 	server: {
 		fs: {
@@ -61,7 +90,9 @@ export default defineConfig({
 			}
 		}
 	},
-	resolve: {
-		dedupe: ['@noir-lang/noir_wasm', '@noir-lang/noir_js']
+	// Add SSR specific configuration
+	ssr: {
+		// Exclude problematic dependencies from SSR
+		noExternal: ['buffer', 'crypto-browserify', 'stream-browserify', 'assert', 'util']
 	}
 });
