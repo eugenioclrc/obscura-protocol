@@ -1,8 +1,9 @@
 import { compile, createFileManager } from '@noir-lang/noir_wasm';
 
 import main from '../../../elgamal-tokens/circuits/mint/src/main.nr?url';
-import elgamal from '../../../elgamal-tokens/circuits/mint/src/elgamal.nr?url';
 import nargoToml from '../../../elgamal-tokens/circuits/mint/Nargo.toml?url';
+import elgamal from '../../../elgamal-tokens/circuits/elgamal/src/lib.nr?url';
+import elgamalNargoToml from '../../../elgamal-tokens/circuits/elgamal/Nargo.toml?url';
 
 // Pre-download the known dependencies to avoid CORS issues
 async function preloadDependencies() {
@@ -88,6 +89,7 @@ export async function getCircuit() {
 		const mainResponse = await fetch(main);
 		const nargoTomlResponse = await fetch(nargoToml);
 		const elgamalResponse = await fetch(elgamal);
+		const elgamalNargoTomlResponse = await fetch(elgamalNargoToml);
 
 		// Check if responses are valid
 		if (!mainResponse.ok || !nargoTomlResponse.ok || !elgamalResponse.ok) {
@@ -98,16 +100,20 @@ export async function getCircuit() {
 		const mainText = await mainResponse.text();
 		const nargoTomlText = await nargoTomlResponse.text();
 		const elgamalText = await elgamalResponse.text();
+		const elgamalNargoTomlText = await elgamalNargoTomlResponse.text();
 
 		// Convert text to ReadableStream for noir_wasm
 		const mainStream = textToReadableStream(mainText);
 		const nargoTomlStream = textToReadableStream(nargoTomlText);
 		const elgamalStream = textToReadableStream(elgamalText);
+		const elgamalNargoTomlStream = textToReadableStream(elgamalNargoTomlText);
+
 
 		// Write the streams to the file manager
 		fm.writeFile('./src/main.nr', mainStream);
 		fm.writeFile('./Nargo.toml', nargoTomlStream);
-		fm.writeFile('./src/elgamal.nr', elgamalStream);
+		fm.writeFile('./elgamal/src/lib.nr', elgamalStream);
+		fm.writeFile('./elgamal/Nargo.toml', elgamalNargoTomlStream);
 
 		console.log('Compiling circuit...');
 		const result = await compile(fm);
