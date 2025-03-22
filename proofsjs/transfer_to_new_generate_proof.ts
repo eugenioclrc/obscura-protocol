@@ -129,7 +129,14 @@ const main = async () => {
         
         console.log('Generating proof...');
         const proof = await backend.generateProof(witness);
-        console.log('Proof generated:', proof);
+        // console.log('Proof generated:', proof);
+        console.log({
+            senderOldBalanceClear,
+            senderNewBalanceClear,
+            randomness1,
+            randomness2,
+            recipientNewEncryptedBalance,
+        })
         
         return proof;
     } catch (error) {
@@ -142,8 +149,8 @@ main().catch(error => {
     console.error('Fatal error:', error);
     process.exit(1);
 }).then((data) => {
-    console.log("Public Inputs:", data.publicInputs);
+    // console.log("Public Inputs:", data.publicInputs);
     // proof to hex
     console.log("Proof:", Buffer.from(data.proof).toString('hex'));
     process.exit(0);
-}); 
+});
