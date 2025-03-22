@@ -80,6 +80,8 @@ contract UltraVerifierTest is Test {
         noirHelper.clean();
         
         // Create inputs for the proof - using string representations to avoid TOML parsing issues
+        
+        /* not working
         noirHelper.withInput("private_key", vm.toString(privateKey))
             .withInput("randomness", vm.toString(randomness))
             .withInput("public_key_x", vm.toString(publicKeyX))
@@ -89,9 +91,33 @@ contract UltraVerifierTest is Test {
             .withInput("C1_y", vm.toString(C1_y))
             .withInput("C2_x", vm.toString(C2_x))
             .withInput("C2_y", vm.toString(C2_y));
+            */
         
-        // Generate the proof - using 4 public inputs (public key x/y and ciphertext points)
-        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint", 4);
+        // Generate the proof - using public inputs (public key x/y and ciphertext points)
+        //(bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint", 7);
+        // @todo use proof from file proof_mint.json
+        /*
+        and this public input:
+        ```
+        {
+            "private_key": "363392786237362068767139959337036002311688465567650996034788007646727742377",
+            "randomness": "168986485046885582825082387270879151100288537211746581237924789162159767775",
+            "public_key": {
+                "x": "11399805767625558235203971404651168062138053844057929237231029823545978690429",
+                "y": "16107672938816583933731171731418032574757815549503661527457618583376341575199"
+            },
+            "value": 10000,
+            "C1": {
+                "x": "1496197583352242063455862221527010906604817232528901172130809043230997246824",
+                "y": "4254363608840175473367393558422388112815775052382181131620648571022664794991"
+            },
+            "C2": {
+                "x": "547569482198353691335551042438602887242720055887692148619786977945462377382",
+                "y": "19058709733707387429852348723195847206775195997862985934749463164317886511126"
+            }
+        }
+        ```
+        */
         
         ElToken.EncryptedBalance memory encryptedBalance = ElToken.EncryptedBalance({
             C1x: C1_x,
@@ -99,6 +125,22 @@ contract UltraVerifierTest is Test {
             C2x: C2_x,
             C2y: C2_y
         });
+
+        // Load the proof from file
+        string memory proofJson = vm.readFile("./test/proof_mint.bytes");
+        bytes memory proof = vm.parseBytes(proofJson);
+        
+        // Alternatively, generate the proof using NoirHelper (uncomment if needed)
+        /*
+        noirHelper.withInput("private_key", vm.toString(privateKey))
+            .withInput("randomness", vm.toString(randomness))
+            .withInput("public_key", string.concat('{"x":', vm.toString(publicKeyX), ',"y":', vm.toString(publicKeyY), '}'))
+            .withInput("value", vm.toString(mintAmount))
+            .withInput("C1", string.concat('{"x":', vm.toString(C1_x), ',"y":', vm.toString(C1_y), '}'))
+            .withInput("C2", string.concat('{"x":', vm.toString(C2_x), ',"y":', vm.toString(C2_y), '}'));
+        
+        (bytes32[] memory publicInputs, bytes memory proof) = noirHelper.generateProof("test_mint", 7);
+        */
 
         // Execute mint with the proof
         elToken.mint(proof, encryptedBalance);

@@ -38,7 +38,11 @@ onMount(async () => {
         const babyJub = new BabyJubJubUtils();
         await babyJub.init();
         const publicKey = babyJub.privateToPublicKey(BigInt("363392786237362068767139959337036002311688465567650996034788007646727742377"));
-
+        const encryptedValue = babyJub.exp_elgamal_encrypt(
+            publicKey,
+            10000,
+            "168986485046885582825082387270879151100288537211746581237924789162159767775"
+        );
         // Create inputs for the proof - using string representations to avoid TOML parsing issues
         const proofInputs = {
             private_key: "363392786237362068767139959337036002311688465567650996034788007646727742377",
@@ -49,12 +53,12 @@ onMount(async () => {
             },
             value: 10000,
             C1: {
-                x: "1496197583352242063455862221527010906604817232528901172130809043230997246824",
-                y: "4254363608840175473367393558422388112815775052382181131620648571022664794991"
+              x: encryptedValue.C1.x.toString(),
+              y: encryptedValue.C1.y.toString()
             },
             C2: {
-                x: "547569482198353691335551042438602887242720055887692148619786977945462377382",
-                y: "19058709733707387429852348723195847206775195997862985934749463164317886511126"
+              x: encryptedValue.C2.x.toString(),
+              y: encryptedValue.C2.y.toString()
             }
         };
         
