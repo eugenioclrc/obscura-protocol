@@ -60,6 +60,20 @@ async function preloadDependencies() {
     }
 }
 
+// This is a workaround to convert text responses to ReadableStream for noir_wasm
+function textToReadableStream(text: string): ReadableStream<Uint8Array> {
+    const encoder = new TextEncoder();
+    const uint8Array = encoder.encode(text);
+    
+    // Create a ReadableStream from the Uint8Array
+    return new ReadableStream({
+        start(controller) {
+            controller.enqueue(uint8Array);
+            controller.close();
+        }
+    });
+}
+
 export async function getCircuit() {
     // Only try to preload dependencies in the browser
     if (typeof window !== 'undefined') {
@@ -67,17 +81,33 @@ export async function getCircuit() {
     }
     
     const fm = createFileManager("/");
-    const mainResponse = await fetch(main);
-    const nargoTomlResponse = await fetch(nargoToml);
-    const elgamalResponse = await fetch(elgamal);
-    if (!mainResponse.body || !nargoTomlResponse.body) {
-        throw new Error("Failed to fetch required circuit files");
-    }
-   
-    fm.writeFile("./src/main.nr", mainResponse.body);
-    fm.writeFile("./Nargo.toml", nargoTomlResponse.body);
-    fm.writeFile("./src/elgamal.nr", elgamalResponse.body);
+    
     try {
+        // Fetch all required files
+        const mainResponse = await fetch(main);
+        const nargoTomlResponse = await fetch(nargoToml);
+        const elgamalResponse = await fetch(elgamal);
+        
+        // Check if responses are valid
+        if (!mainResponse.ok || !nargoTomlResponse.ok || !elgamalResponse.ok) {
+            throw new Error("Failed to fetch required circuit files");
+        }
+        
+        // Get the text content
+        const mainText = await mainResponse.text();
+        const nargoTomlText = await nargoTomlResponse.text();
+        const elgamalText = await elgamalResponse.text();
+        
+        // Convert text to ReadableStream for noir_wasm
+        const mainStream = textToReadableStream(mainText);
+        const nargoTomlStream = textToReadableStream(nargoTomlText);
+        const elgamalStream = textToReadableStream(elgamalText);
+        
+        // Write the streams to the file manager
+        fm.writeFile("./src/main.nr", mainStream);
+        fm.writeFile("./Nargo.toml", nargoTomlStream);
+        fm.writeFile("./src/elgamal.nr", elgamalStream);
+        
         console.log("Compiling circuit...");
         const result = await compile(fm);
         console.log("Circuit compiled successfully");
