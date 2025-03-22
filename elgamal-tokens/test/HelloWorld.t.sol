@@ -8,12 +8,13 @@ import {UltraVerifier as HelloWorldVerifer} from "../src/verifiers/helloworldUlt
 import {Starter} from "../src/Starter.sol";
 
 contract UltraVerifierTest is Test {
-    NoirHelper public noirHelper = new NoirHelper();
+    NoirHelper public noirHelper;
 
     HelloWorldVerifer public verifier;
     Starter public starter;
 
     function setUp() public {
+        noirHelper = new NoirHelper();
         verifier = new HelloWorldVerifer();
         starter = new Starter(address(verifier));
     }

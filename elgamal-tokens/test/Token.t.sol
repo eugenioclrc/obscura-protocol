@@ -10,16 +10,21 @@ import {PublicKeyInfrastructure} from "../src/PublicKeyInfrastructure.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
 
 contract UltraVerifierTest is Test {
-    NoirHelper public noirHelper = new NoirHelper();
+    NoirHelper public noirHelper;
 
     MintUltraVerifier public mint_verifier;
-    PublicKeyInfrastructure public pki = new PublicKeyInfrastructure();
+    PublicKeyInfrastructure public pki;
     ElToken public elToken;
-    WETH public weth = new WETH();
+    WETH public weth;
 
     address bob = makeAddr("bob");
 
     function setUp() public {
+      noirHelper = new NoirHelper();
+
+     weth = new WETH();
+
+        pki = new PublicKeyInfrastructure();
         mint_verifier = new MintUltraVerifier();
         elToken = new ElToken(address(weth), address(pki), address(mint_verifier));
 
