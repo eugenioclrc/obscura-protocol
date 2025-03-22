@@ -19,7 +19,7 @@ if (typeof window !== 'undefined' && typeof window.Buffer === 'undefined') {
 }
 
 // Import the rest of the dependencies
-import { UltraHonkBackend } from '@aztec/bb.js';
+import { UltraPlonkBackend } from '@aztec/bb.js';
 import { Noir } from '@noir-lang/noir_js';
 
 import {getCircuit} from '$lib/circuits';
@@ -33,7 +33,7 @@ onMount(async () => {
         const { program } = await getCircuit();
         console.log("Circuit loaded successfully");
         const noir = new Noir(program);
-        const backend = new UltraHonkBackend(program.bytecode);
+        const backend = new UltraPlonkBackend(program.bytecode);
 
         const babyJub = new BabyJubJubUtils();
         await babyJub.init();
