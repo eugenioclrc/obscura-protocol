@@ -50,7 +50,7 @@ const main = async () => {
         console.log('Public key:', JSON.stringify(publicKey, jsonStringifyReplacer));
         
         // Value to mint (should be a u40, i.e., less than 2^40)
-        const value = 1000000000000; // 1 trillion tokens
+        const value = 10000; // 1_0000 tokens == 1 ether
         
         // Randomness for the encryption
         // The randomness from the test is used for consistency

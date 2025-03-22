@@ -126,23 +126,26 @@ contract ElToken is IERC20 {
     ) external returns (bool) {
         EncryptedBalance memory EncryptedBalanceOldMeNow = balances[msg.sender];
         EncryptedBalance memory EncryptedBalanceOldToNow = balances[to];
-        require(
-            EncryptedBalanceOldToNow.C1x == EncryptedBalanceOldTo.C1x
-                && EncryptedBalanceOldToNow.C1y == EncryptedBalanceOldTo.C1y
-                && EncryptedBalanceOldToNow.C2x == EncryptedBalanceOldTo.C2x
-                && EncryptedBalanceOldToNow.C2y == EncryptedBalanceOldTo.C2y
-                && EncryptedBalanceOldMeNow.C1x == EncryptedBalanceOldMe.C1x
-                && EncryptedBalanceOldMeNow.C1y == EncryptedBalanceOldMe.C1y
-                && EncryptedBalanceOldMeNow.C2x == EncryptedBalanceOldMe.C2x
-                && EncryptedBalanceOldMeNow.C2y == EncryptedBalanceOldMe.C2y
-        ); // this require is at the top of the transfer function, in order to limit gas spent in case of accidental front-running - front-running attack issue is already deterred thanks to the assert(value>=1) constraint inside the circuits (see comments in transfer/src/main.nr)
-        require(msg.sender != to, "Cannot transfer to self");
 
         (uint256 registeredKeyMeX, uint256 registeredKeyMeY) = FACTORY.PKI().registry(msg.sender);
-        require(registeredKeyMeX + registeredKeyMeY != 0, "Sender has not registered a Public Key yet");
+        require(registeredKeyMeX + registeredKeyMeY != 0, "SENDER_NOT_REGISTERED");
 
         (uint256 registeredKeyToX, uint256 registeredKeyToY) = FACTORY.PKI().registry(to);
-        require(registeredKeyToX + registeredKeyToY != 0, "Receiver has not registered a Public Key yet");
+        require(registeredKeyToX + registeredKeyToY != 0, "RECEIVER_NOT_REGISTERED");
+
+
+        // this requires is at the top of the transfer function, in order to limit gas spent in case of accidental front-running - front-running attack issue is already deterred thanks to the assert(value>=1) constraint inside the circuits (see comments in transfer/src/main.nr)
+        require(EncryptedBalanceOldMeNow.C1x == EncryptedBalanceOldMe.C1x, "wrong C1x old me");
+        require(EncryptedBalanceOldMeNow.C1y == EncryptedBalanceOldMe.C1y, "wrong C1y old me");
+        require(EncryptedBalanceOldMeNow.C2x == EncryptedBalanceOldMe.C2x, "wrong C2x old me");
+        require(EncryptedBalanceOldMeNow.C2y == EncryptedBalanceOldMe.C2y, "wrong C2y old me");
+
+        require(EncryptedBalanceOldToNow.C1x == EncryptedBalanceOldTo.C1x, "wrong C1x old to");
+        require(EncryptedBalanceOldToNow.C1y == EncryptedBalanceOldTo.C1y, "wrong C1y old to");
+        require(EncryptedBalanceOldToNow.C2x == EncryptedBalanceOldTo.C2x, "wrong C2x old to");
+        require(EncryptedBalanceOldToNow.C2y == EncryptedBalanceOldTo.C2y, "wrong C2y old to");
+
+        require(msg.sender != to, "Cannot transfer to self");
 
         require(
             EncryptedBalanceOldMe.C1x + EncryptedBalanceOldMe.C1y + EncryptedBalanceOldMe.C1y

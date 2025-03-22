@@ -69,10 +69,10 @@ contract UltraVerifierTest is Test {
     }
 
     function test_mint() public {
-        uint256 privateKey = 363392786237362068767139959337036002311688465567650996034788007646727742377;
-        uint256 publicKeyX = 11399805767625558235203971404651168062138053844057929237231029823545978690429;
-        uint256 publicKeyY = 16107672938816583933731171731418032574757815549503661527457618583376341575199;
-        uint256 randomness = 168986485046885582825082387270879151100288537211746581237924789162159767775;
+        //uint256 privateKey = 363392786237362068767139959337036002311688465567650996034788007646727742377;
+        uint256 publicKeyX = 11035571757224451620605786890790132844722231619710976007063020523319248877914;
+        uint256 publicKeyY = 19186343803061871491190042465391631772251521601054015091722300428018876653532;
+        //uint256 randomness = 168986485046885582825082387270879151100288537211746581237924789162159767775;
 
         vm.startPrank(bob);
         PKI.registerPublicKey(publicKeyX, publicKeyY);
@@ -82,8 +82,8 @@ contract UltraVerifierTest is Test {
         // Encrypted ciphertext data
         uint256 C1_x = 1496197583352242063455862221527010906604817232528901172130809043230997246824;
         uint256 C1_y = 4254363608840175473367393558422388112815775052382181131620648571022664794991;
-        uint256 C2_x = 547569482198353691335551042438602887242720055887692148619786977945462377382;
-        uint256 C2_y = 19058709733707387429852348723195847206775195997862985934749463164317886511126;
+        uint256 C2_x = 20465501074627735547581698300835043318363179866890168887292719178623513167299;
+        uint256 C2_y = 12927228287522866177755582722853391527403617932038524316984546244666235976478;
 
         // Setup Noir proof generation
         //noirHelper = noirHelper.withProjectPath("./circuits/mint");
@@ -101,15 +101,97 @@ contract UltraVerifierTest is Test {
         // Execute mint with the proof
         elToken.mint(proof, encryptedBalance);
 
+        (uint256 bobbalanceC1x, uint256 bobbalanceC1y, uint256 bobbalanceC2x, uint256 bobbalanceC2y) = elToken.balances(bob);
+        assertEq(bobbalanceC1x, C1_x);
+        assertEq(bobbalanceC1y, C1_y);
+        assertEq(bobbalanceC2x, C2_x);
+        assertEq(bobbalanceC2y, C2_y);
+
         // Assert the mint was successful
         assertEq(elToken.mintPending(bob), 0);
 
         vm.stopPrank();
     }
 
-    function test_transfer() public {
+    function test_transfer_to_new() public {
+        test_mint();
+
+          // Encrypted ciphertext data
+          uint256 C1_x = 1496197583352242063455862221527010906604817232528901172130809043230997246824;
+          uint256 C1_y = 4254363608840175473367393558422388112815775052382181131620648571022664794991;
+          uint256 C2_x = 20465501074627735547581698300835043318363179866890168887292719178623513167299;
+          uint256 C2_y = 12927228287522866177755582722853391527403617932038524316984546244666235976478;
+  
+        (uint256 bobbalanceC1x, uint256 bobbalanceC1y, uint256 bobbalanceC2x, uint256 bobbalanceC2y) = elToken.balances(bob);
+        
+        assertEq(bobbalanceC1x, C1_x);
+        assertEq(bobbalanceC1y, C1_y);
+        assertEq(bobbalanceC2x, C2_x);
+        assertEq(bobbalanceC2y, C2_y);
+
+      
+        // at this point bob has 1_0000 tokens that equivalent to 1 ether WETH
         vm.startPrank(bob);
-        elToken.transfer(alice, 1 ether);
+      
+        
+        // Create encrypted balance objects with the public inputs
+        ElToken.EncryptedBalance memory encryptedBalanceOldMe = ElToken.EncryptedBalance({
+            C1x: bobbalanceC1x,
+            C1y: bobbalanceC1y,
+            C2x: bobbalanceC2x,
+            C2y: bobbalanceC2y
+        });
+
+        
+        // For a new receiver like Alice, the old balance would be zeros
+        ElToken.EncryptedBalance memory encryptedBalanceOldTo = ElToken.EncryptedBalance({
+            C1x: 0,
+            C1y: 0,
+            C2x: 0,
+            C2y: 0
+        });
+        
+        // New balance for Bob after transfer
+        ElToken.EncryptedBalance memory encryptedBalanceNewMe = ElToken.EncryptedBalance({
+            C1x: 1496197583352242063455862221527010906604817232528901172130809043230997246824,
+            C1y: 4254363608840175473367393558422388112815775052382181131620648571022664794991,
+            C2x: 7132239081249683658423301873709487886527317837638472026039930231927727767690,
+            C2y: 20712645620037612149496468163608886190807435151767794218410876452886668026838
+        });
+        
+        // New balance for Alice after transfer
+        ElToken.EncryptedBalance memory encryptedBalanceNewTo = ElToken.EncryptedBalance({
+            C1x: 5101368220729117265340845140402972511220167236309017717230892476800594300849,
+            C1y: 9464551464843298006890812707339307347419442508224586622078302003473992946248,
+            C2x: 12569109508198965523215984731209646522185734359542096304413601810871781846681,
+            C2y: 13208904001440149853051089636207920553482181951125970640265081452010859970019
+        });
+
+
+        // Load the proof from file
+        string memory proofJson = vm.readFile("./test/proof_transfer_to_new.bytes");
+        bytes memory proof_transfer = vm.parseBytes(proofJson);
+        
+        vm.expectRevert("RECEIVER_NOT_REGISTERED");
+        elToken.transferPrivate(alice, encryptedBalanceOldMe, encryptedBalanceOldTo, encryptedBalanceNewMe, encryptedBalanceNewTo, proof_transfer);
+        
+        vm.stopPrank();
+
+        // Register a key for Alice
+        vm.startPrank(alice);
+
+        uint256 publicKeyX = 4634264854040818138625745019270360081367026367183099861136305383680538427056;
+        uint256 publicKeyY = 15673152810959729295350484662231526942827385252225094571441698124202132264222;
+        PKI.registerPublicKey(publicKeyX, publicKeyY);
+        vm.stopPrank();
+
+        console.log("bob balance C1x", bobbalanceC1x);
+        console.log("bob balance C1y", bobbalanceC1y);
+        console.log("bob balance C2x", bobbalanceC2x);
+        console.log("bob balance C2y", bobbalanceC2y);
+
+        vm.startPrank(bob);
+        elToken.transferPrivate(alice, encryptedBalanceOldMe, encryptedBalanceOldTo, encryptedBalanceNewMe, encryptedBalanceNewTo, proof_transfer);
         vm.stopPrank();
     }
 

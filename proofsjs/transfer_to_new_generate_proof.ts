@@ -67,7 +67,7 @@ const main = async () => {
         console.log('Generating encrypted balances...');
         
         // Here we simulate existing encrypted balances for testing
-        const oldRandomness = BigInt("1223911427385630814994881905088740515414339792865684838215099796087690786721");
+        const oldRandomness = BigInt("168986485046885582825082387270879151100288537211746581237924789162159767775");
         
         const senderOldEncryptedBalance = bjj.exp_elgamal_encrypt(senderPublicKey, senderOldBalanceClear, oldRandomness);
         
