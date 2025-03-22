@@ -28,12 +28,16 @@ import { BabyJubJubUtils } from '$lib/elgamal';
 import {onMount} from 'svelte';
 
 onMount(async () => {
+    
+});
+
+async function demo() {
     try {
         console.log("Getting circuit...");
         const { program } = await getCircuit();
         console.log("Circuit loaded successfully");
         const noir = new Noir(program);
-        const backend = new UltraPlonkBackend(program.bytecode);
+        const backend = new UltraPlonkBackend(program.bytecode, { threads: window.navigator.hardwareConcurrency }, { recursive: true });
 
         const babyJub = new BabyJubJubUtils();
         await babyJub.init();
@@ -62,22 +66,28 @@ onMount(async () => {
             }
         };
         
+        console.time("Witness generation");
         console.log("logs", "Generating witness... ⏳");
         const { witness } = await noir.execute(proofInputs);
         console.log("logs", "Generated witness... ✅");
+        console.timeEnd("Witness generation");
 
+        console.time("Proof generation");
         console.log("logs", "Generating proof... ⏳");
         const proof = await backend.generateProof(witness);
         console.log("logs", "Generated proof... ✅");
-        console.log("results", proof.proof);
+        console.timeEnd("Proof generation");
+        
         // log proof Uint8Array to hexadecimal
         console.log("results", Array.from(new Uint8Array(proof.proof)).map(b => b.toString(16).padStart(2, '0')).join(''));
         console.log(proofInputs)
     } catch (error) {
         console.error("Error during circuit execution:", error);
     }
-});
+}
+
 </script>
 
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<button class="btn m-4" on:click={demo}>Run demo</button>
