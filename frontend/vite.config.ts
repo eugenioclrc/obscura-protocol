@@ -12,7 +12,7 @@ const elgamalTokensPath = path.resolve(rootPath, 'elgamal-tokens');
 
 export default defineConfig({
 	plugins: [
-		tailwindcss(), 
+		tailwindcss(),
 		sveltekit(),
 		// Add Node.js polyfills
 		nodePolyfills({
@@ -48,7 +48,7 @@ export default defineConfig({
 	// Add Node.js polyfills
 	define: {
 		'process.env': {},
-		'global': 'globalThis'
+		global: 'globalThis'
 	},
 	server: {
 		fs: {
@@ -79,7 +79,7 @@ export default defineConfig({
 					});
 				}
 			},
-			// Add specific proxy for codeload.github.com 
+			// Add specific proxy for codeload.github.com
 			'/codeload-proxy': {
 				target: 'https://codeload.github.com',
 				changeOrigin: true,

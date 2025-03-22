@@ -1,5 +1,5 @@
 declare global {
-  interface Window {
-    Buffer: any;
-  }
-} 
+	interface Window {
+		Buffer: any;
+	}
+}
