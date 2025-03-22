@@ -12,21 +12,21 @@ import {WETH} from "solmate/tokens/WETH.sol";
 contract UltraVerifierTest is Test {
     NoirHelper public noirHelper;
 
-    MintUltraVerifier public mint_verifier;
-    PublicKeyInfrastructure public pki;
+    MintUltraVerifier public MINT_VERIFIER;
+    PublicKeyInfrastructure public PKI;
     ElToken public elToken;
     WETH public weth;
 
     address bob = makeAddr("bob");
 
     function setUp() public {
-      noirHelper = new NoirHelper();
+        noirHelper = new NoirHelper();
 
-     weth = new WETH();
+        weth = new WETH();
 
-        pki = new PublicKeyInfrastructure();
-        mint_verifier = new MintUltraVerifier();
-        elToken = new ElToken(address(weth), address(pki), address(mint_verifier));
+        PKI = new PublicKeyInfrastructure();
+        MINT_VERIFIER = new MintUltraVerifier();
+        elToken = new ElToken(address(weth));
 
         // Mint some tokens
         deal(bob, 1 ether);
@@ -47,7 +47,7 @@ contract UltraVerifierTest is Test {
         vm.expectRevert("NOT_REGISTERED");
         elToken.deposit(1 ether);
 
-        pki.registerPublicKey(2, 2);
+        PKI.registerPublicKey(2, 2);
 
         vm.expectRevert();
         elToken.deposit(2 ether);
@@ -68,7 +68,7 @@ contract UltraVerifierTest is Test {
         uint256 randomness = 168986485046885582825082387270879151100288537211746581237924789162159767775;
 
         vm.startPrank(bob);
-        pki.registerPublicKey(publicKeyX, publicKeyY);
+        PKI.registerPublicKey(publicKeyX, publicKeyY);
         elToken.deposit(1 ether);
         
         // Encrypted ciphertext data
