@@ -2,7 +2,7 @@
 // It is the responsiblity of the smart contract developer to ensure that all plaintexts are in the u40 range before encryption
 
 use dep::ec::tecurve::affine::Point;
-mod elgamal;
+use elgamal;
 
 // Code of the circuit used once at construction of the token to prove the correctness of encryption of the minted total supply.
 // In this particular case, we are using a zkSNARK only for its succintness property, not the zk property, because total supply is publicly known.

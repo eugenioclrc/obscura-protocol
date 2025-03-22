@@ -1,10 +1,9 @@
 [package]
-name = "mint"
-type = "bin"
+name = "elgamal"
+type = "lib"
 version = "0.1.0"
 authors = [""]
 
 [dependencies]
 ec = { tag = "v0.1.2", git = "https://github.com/noir-lang/ec" }
-elgamal = { path = "../elgamal" }
 
