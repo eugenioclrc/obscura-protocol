@@ -1,0 +1,15 @@
+{
+  "name": "proofsjs",
+  "version": "1.0.0",
+  "description": "this folder contains basic javascript code to generate proofs for the circuits.",
+  "main": "mint_generate_proof.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "eugenioclrc",
+  "license": "ISC",
+  "dependencies": {
+    "@aztec/bb.js": "^0.82.0",
+    "@noir-lang/noir_js": "^1.0.0-beta.3"
+  }
+}
