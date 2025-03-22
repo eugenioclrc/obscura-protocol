@@ -27,8 +27,6 @@ contract ElToken is IERC20 {
     mapping(address => uint256) public mintPending;
     uint256 public mintTotal;
 
-    PublicKeyInfrastructure immutable PKI;
-
     struct EncryptedBalance {
         // #TODO : We could pack those in 2 uints instead of 4 to save storage costs (for e.g using circomlibjs library to pack points on BabyJubjub)
         uint256 C1x;
@@ -89,7 +87,7 @@ contract ElToken is IERC20 {
         totalSupply += amount;
         mintTotal -= amount;
 
-        (uint256 registeredKeyX, uint256 registeredKeyY) = PKI.registry(msg.sender);
+        (uint256 registeredKeyX, uint256 registeredKeyY) = FACTORY.PKI().registry(msg.sender);
         //_mint(msg.sender, amount, proof_mint, registeredKey, amountEncrypted);
 
         bytes32[] memory publicInputs = new bytes32[](7);
