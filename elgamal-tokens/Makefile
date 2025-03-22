@@ -1,4 +1,4 @@
-CIRCUITS := helloworld mint
+CIRCUITS := helloworld mint transfer
 BUILD_DIR := circuits
 SRC_DIR := src
 
