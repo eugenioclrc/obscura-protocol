@@ -133,7 +133,6 @@ contract ElToken is IERC20 {
         (uint256 registeredKeyToX, uint256 registeredKeyToY) = FACTORY.PKI().registry(to);
         require(registeredKeyToX + registeredKeyToY != 0, "RECEIVER_NOT_REGISTERED");
 
-
         // this requires is at the top of the transfer function, in order to limit gas spent in case of accidental front-running - front-running attack issue is already deterred thanks to the assert(value>=1) constraint inside the circuits (see comments in transfer/src/main.nr)
         require(EncryptedBalanceOldMeNow.C1x == EncryptedBalanceOldMe.C1x, "wrong C1x old me");
         require(EncryptedBalanceOldMeNow.C1y == EncryptedBalanceOldMe.C1y, "wrong C1y old me");
