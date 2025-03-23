@@ -1,9 +1,9 @@
 import { compile, createFileManager } from '@noir-lang/noir_wasm';
 
-import main from '../../../elgamal-tokens/circuits/mint/src/main.nr?url';
-import nargoToml from '../../../elgamal-tokens/circuits/mint/Nargo.toml?url';
-import elgamal from '../../../elgamal-tokens/circuits/elgamal/src/lib.nr?url';
-import elgamalNargoToml from '../../../elgamal-tokens/circuits/elgamal/Nargo.toml?url';
+import main from '../../../circuits/mint/src/main.nr?url';
+import nargoToml from '../../../circuits/mint/Nargo.toml?url';
+import elgamal from '../../../circuits/elgamal/src/lib.nr?url';
+import elgamalNargoToml from '../../../circuits/elgamal/Nargo.toml?url';
 
 // Pre-download the known dependencies to avoid CORS issues
 async function preloadDependencies() {
