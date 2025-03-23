@@ -44,6 +44,7 @@
 		"@noir-lang/noir_wasm": "1.0.0-beta.3",
 		"@tanstack/react-query": "^5.69.0",
 		"circomlibjs": "^0.1.7",
+		"iconify-icon": "^2.3.0",
 		"viem": "2.x",
 		"wagmi": "^2.14.15",
 		"zksync-sso": "^0.0.0-beta.12"

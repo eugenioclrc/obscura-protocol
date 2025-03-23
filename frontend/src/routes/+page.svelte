@@ -1,120 +1,46 @@
 <script>
-	// Import and initialize polyfills first
-	import '$lib/polyfills';
-
-	import { connectWithSSO, wagmiConfig } from '$lib/wagmiWallet';
-
-	import { reconnect } from '@wagmi/core';
-	import { getAccount } from '@wagmi/core';
-
-	// Set up Buffer globally if it's not already available (fallback)
-	if (typeof window !== 'undefined' && typeof window.Buffer === 'undefined') {
-		// This is a last resort fallback if the Vite plugin fails
-		console.warn('Buffer not defined by Vite plugin, using fallback');
-
-		// Dynamically import buffer
-		const bufferPromise = import('buffer');
-		bufferPromise
-			.then(({ Buffer }) => {
-				// @ts-expect-error - Adding Buffer to window
-				window.Buffer = Buffer;
-				console.log('Buffer polyfill loaded via fallback');
-			})
-			.catch((err) => {
-				console.error('Failed to load Buffer polyfill:', err);
-			});
-	}
-
-	// Import the rest of the dependencies
-	import { UltraPlonkBackend } from '@aztec/bb.js';
-	import { Noir } from '@noir-lang/noir_js';
-
-	import { getCircuit } from '$lib/circuits';
-	import { BabyJubJubUtils } from '$lib/elgamal';
-
-	import { onMount } from 'svelte';
-
-	onMount(async () => {
-		await reconnect(wagmiConfig);
-		account = getAccount(wagmiConfig);
-		window.w = wagmiConfig;
-	});
-
-	$: account = getAccount(wagmiConfig);
-	$: isConnected = account.isConnected;
-	$: address = account.address;
-
-	$: console.log({ isConnected, address });
-	$: console.log(wagmiConfig);
-
-	async function demo() {
-		try {
-			console.log('Getting circuit...');
-			const { program } = await getCircuit();
-			console.log('Circuit loaded successfully');
-			const noir = new Noir(program);
-			const backend = new UltraPlonkBackend(
-				program.bytecode,
-				{ threads: window.navigator.hardwareConcurrency },
-				{ recursive: true }
-			);
-
-			const babyJub = new BabyJubJubUtils();
-			await babyJub.init();
-			const publicKey = babyJub.privateToPublicKey(
-				BigInt('363392786237362068767139959337036002311688465567650996034788007646727742377')
-			);
-			const encryptedValue = babyJub.exp_elgamal_encrypt(
-				publicKey,
-				10000,
-				'168986485046885582825082387270879151100288537211746581237924789162159767775'
-			);
-			// Create inputs for the proof - using string representations to avoid TOML parsing issues
-			const proofInputs = {
-				private_key: '363392786237362068767139959337036002311688465567650996034788007646727742377',
-				randomness: '168986485046885582825082387270879151100288537211746581237924789162159767775',
-				public_key: {
-					x: publicKey.x.toString(),
-					y: publicKey.y.toString()
-				},
-				value: 10000,
-				C1: {
-					x: encryptedValue.C1.x.toString(),
-					y: encryptedValue.C1.y.toString()
-				},
-				C2: {
-					x: encryptedValue.C2.x.toString(),
-					y: encryptedValue.C2.y.toString()
-				}
-			};
-
-			console.time('Witness generation');
-			console.log('logs', 'Generating witness... ⏳');
-			const { witness } = await noir.execute(proofInputs);
-			console.log('logs', 'Generated witness... ✅');
-			console.timeEnd('Witness generation');
-
-			console.time('Proof generation');
-			console.log('logs', 'Generating proof... ⏳');
-			const proof = await backend.generateProof(witness);
-			console.log('logs', 'Generated proof... ✅');
-			console.timeEnd('Proof generation');
-
-			// log proof Uint8Array to hexadecimal
-			console.log(
-				'results',
-				Array.from(new Uint8Array(proof.proof))
-					.map((b) => b.toString(16).padStart(2, '0'))
-					.join('')
-			);
-			console.log(proofInputs);
-		} catch (error) {
-			console.error('Error during circuit execution:', error);
-		}
-	}
-</script>
-
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
-<button class="btn m-4" on:click={demo}>Run demo</button>
-<button class="btn m-4" on:click={connectWithSSO}>Connect with SSO</button>
+    import 'iconify-icon';
+  </script>
+  
+  <!--
+  <div class="h-screen bg-gradient-to-br from-blue-50 to-purple-50">
+    <div class="container mx-auto px-4 h-full flex flex-col items-center justify-center">
+      <div class="w-full max-w-[375px] space-y-8 text-center">
+        <h1 class="text-4xl font-bold">Trifecta Wallet</h1>
+        <p class="text-gray-600">Secure your assets with next-gen Passkey technology</p>
+        <a
+          class="btn btn-primary w-full"
+          href="/app/onboarding"
+        >
+          Get Started
+        </a>
+      </div>
+    </div>
+  </div>
+  -->
+  
+  
+  <div class="mx-auto h-screen max-w-md select-none bg-[#e84142]">
+      <h1 class="relative z-10 px-6 pt-6 font-mono text-4xl text-white">Argentum</h1>
+          <img src="/landing.png" alt="splash" class="z-0" />
+          <div class="w-full text-balance px-5 text-center text-5xl font-bold leading-snug">
+                  <span class="text-white">Protect your </span>
+                  <span class="rounded-sm bg-white text-[#e84142] p-0.5 text-avax">PRIVACY</span>
+          </div>
+          <div class="px-4 font-thin text-white">
+                  The most fast and simple way of transferring money anonymously.
+          </div>
+  
+          <div class="p-2 pt-6">
+                  <a
+                          href="/app"
+                          class="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-2xl font-semibold text-black shadow-md"
+                  >
+                          <span>Get started</span>
+                          <iconify-icon
+                                  class="ml-2 h-4 w-4 text-2xl"
+                                  icon="heroicons:chevron-right"
+                          ></iconify-icon>
+                  </a>
+          </div>
+  </div>
