@@ -1,5 +1,7 @@
 import { buildBabyjub } from 'circomlibjs';
-import crypto from 'crypto';
+// Use Web Crypto API instead of Node.js crypto
+// import * as nodeCrypto from 'crypto';
+// const crypto = nodeCrypto;
 
 /*
 TODO: debug and use for tests
@@ -44,8 +46,12 @@ export class BabyJubJubUtils {
 		// Calculate the byte length
 		const byteLength = (maxBigInt.toString(16).length + 1) >> 1;
 		while (true) {
-			const buf = crypto.randomBytes(byteLength);
-			let num = BigInt('0x' + buf.toString('hex'));
+			// Use Web Crypto API instead of Node.js crypto
+			const buf = new Uint8Array(byteLength);
+			window.crypto.getRandomValues(buf);
+			let num = BigInt('0x' + Array.from(buf)
+				.map(b => b.toString(16).padStart(2, '0'))
+				.join(''));
 
 			if (num <= maxBigInt) {
 				return num;

@@ -19,7 +19,11 @@ export default defineConfig({
 			// Whether to polyfill `node:` protocol imports
 			protocolImports: true,
 			// Enable specific polyfills
-			include: ['buffer', 'process', 'util', 'stream', 'assert', 'crypto']
+			include: ['buffer', 'process', 'util', 'stream', 'assert', 'crypto'],
+			globals: {
+				process: true,
+				Buffer: true
+			}
 		})
 	],
 	build: {
@@ -43,7 +47,13 @@ export default defineConfig({
 		exclude: ['@noir-lang/noir_wasm', '@noir-lang/noir_js', '@aztec/bb.js']
 	},
 	resolve: {
-		dedupe: ['@noir-lang/noir_wasm', '@noir-lang/noir_js']
+		dedupe: ['@noir-lang/noir_wasm', '@noir-lang/noir_js'],
+		alias: {
+			// Add this to explicitly tell Vite to use crypto-browserify for 'crypto'
+			crypto: 'crypto-browserify',
+			stream: 'stream-browserify',
+			assert: 'assert'
+		}
 	},
 	// Add Node.js polyfills
 	define: {
