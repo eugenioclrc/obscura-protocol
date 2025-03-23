@@ -9,7 +9,7 @@ all: $(CIRCUITS)
 $(CIRCUITS):
 	cd $(BUILD_DIR)/$@ && nargo build
 	echo "$(BUILD_DIR)/$@/target/$@.json"
-	cd $(BUILD_DIR)/$@ && bb write_vk -b ./target/$@.json
+	cd $(BUILD_DIR)/$@ && bb write_vk -b ./target/$@.json --oracle_hash keccak
 	cd $(BUILD_DIR)/$@ && bb contract
 	cp $(BUILD_DIR)/$@/target/contract.sol $(SRC_DIR)/verifiers/$@UltraVerifier.sol
 	cp $(BUILD_DIR)/$@/target/$@.json frontend/static/circuits/
