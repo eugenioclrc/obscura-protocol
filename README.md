@@ -76,7 +76,7 @@ Contains the Solidity smart contracts for the Obscura Protocol. This is a Foundr
 
 ### `/circuits`
 
-Zero-knowledge circuits implemented in Circom:
+Zero-knowledge circuits implemented in Noir:
 - `elgamal/` - Circuits for ElGamal encryption operations
 - `mint/` - Circuits for minting new tokens
 - `transfer/` - Circuits for transferring tokens between users
